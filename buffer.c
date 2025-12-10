@@ -67,6 +67,56 @@ buffer_openfile(char *path)
     return buf;
 }
 
+BufferRender *
+buffer_setrdr(Buffer *buf, BufferRender *rdr)
+{
+	Rune runeline[2048];
+	int i, k, n;
+	CLine *p;
+	int linelen, runelen;
+
+	for (p = rdr->fromline; p != NULL && p->prev != rdr->toline; p = p->next) {
+		n = 0;
+		i = 0;
+		linelen = p->len;
+		if (p == rdr->fromline) /* trim left first line */
+			i = rdr->fromcol;
+		if (p == rdr->toline) /* trim right last line */
+			linelen = rdr->tocol;
+		while (i < linelen) {
+			runelen = chartorune(runeline + n, p->data + i);
+			n++;
+			i += runelen;
+			if (n == sizeof(runeline)/sizeof(Rune) || i == linelen) {
+				k = gapbuffer_insbefore(rdr->gbuf, runeline, n);
+				/* gapbuffer reallocation went wrong for some reason */
+				if (k != n) {
+					free(rdr);
+					gapbuffer_free(rdr->gbuf);
+					return NULL;
+				}
+				n = 0;
+			}
+		}
+	}
+	return rdr;
+}
+
+BufferRender *
+bufferrender_create(CLine *fromline, CLine *toline, int fromcol, int tocol)
+{
+	BufferRender *rdr;
+
+	if ((rdr = malloc(sizeof(BufferRender))) == NULL)
+		return NULL;
+	rdr->fromline = fromline;
+	rdr->toline = toline;
+	rdr->fromcol = fromcol;
+	rdr->tocol = tocol;
+	rdr->gbuf = gapbuffer_create();
+	return rdr;
+}
+
 void
 buffer_free(Buffer *buf)
 {
@@ -144,7 +194,7 @@ cline_grow(CLine *cline)
 
 
 GapBuffer *
-gapbuf_create(void)
+gapbuffer_create(void)
 {
 	GapBuffer *gbuf;
 	
@@ -191,7 +241,7 @@ gapbuffer_delbefore(GapBuffer *gbuf, int n)
 		if (gbuf->bog == gbuf->bob)
 			return i;
 		gbuf->gapcol--;
-		if (*(gbuf->bog - 1) == '\n') {
+		if (*(gbuf->bog - 1) == (Rune)'\n') {
 		    gbuf->gapline--;
 		    /*
 		     * We need to explore the gap buffer to find the begining
@@ -216,7 +266,7 @@ gapbuffer_free(GapBuffer *gbuf)
 }
 
 int
-gapbuf_insafter(GapBuffer *gbuf, Rune *v, int n)
+gapbuffer_insafter(GapBuffer *gbuf, Rune *v, int n)
 {
 	int i;
 
@@ -241,7 +291,8 @@ gapbuffer_insbefore(GapBuffer *gbuf, Rune *v, int n)
 	for (i = 0; i < n; i++) {
 		*gbuf->bog = v[i];
 		gbuf->gapcol++;
-		if (v[i] == '\n') {
+		printf("v[i] = <%d>\n", v[i]);
+		if (v[i] == (Rune)'\n') {
 		    gbuf->gapline++;
 		    gbuf->gapcol = 0;
 		}
@@ -267,7 +318,7 @@ gapbuffer_mvbackward(GapBuffer *gbuf, int n)
 		if (gbuf->bog == gbuf->bob)
 			return moved;
 		gbuf->gapcol--;
-		if (*(gbuf->bob - 1) == '\n') {
+		if (*(gbuf->bob - 1) == (Rune)'\n') {
 		    gbuf->gapline--;
 		    /*
 		     * We need to explore the gap buffer to find the begining
@@ -295,7 +346,7 @@ gapbuffer_mvforward(GapBuffer *gbuf, int n)
 		if (gbuf->eog == gbuf->eob)
 			return moved;
 		gbuf->gapcol++;
-		if (gbuf->eog[1] == '\n') {
+		if (gbuf->eog[1] == (Rune)'\n') {
 		    gbuf->gapline++;
 		    gbuf->gapcol = 0;
 		}

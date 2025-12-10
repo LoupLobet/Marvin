@@ -30,13 +30,14 @@ struct Buffer {
 
 Buffer    *buffer_create(char *);
 Buffer    *buffer_openfile(char *);
+BufferRender    *buffer_setrdr(Buffer *, BufferRender *);
 
 /*
  * A BufferRender is a copy of the Buffer CLines that are currently
  * displayed (or inside the dot if the dot goes out of the screen)
- * as unicode codepoints. For easier text manipulation, it stores
- * lines as a Rune gap buffer with an underlying table of pointers
- * that points to lines.
+ * as unicode codepoints. For easier text rendering, it stores
+ * lines as a Rune gap buffer and maintains a cursor position
+ * (line/column).
  * When text is edited on the screen, modifications are applied
  * inside of the BufferRender lines. When a line goes out of
  * the renderer range, the new version of the line is converted
@@ -47,6 +48,8 @@ struct BufferRender {
     CLine *fromline, *toline;
     int fromcol, tocol;
 };
+
+BufferRender    *bufferrender_create(CLine *, CLine *, int, int);
 
 struct CLine {
     long cap;
