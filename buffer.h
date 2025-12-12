@@ -7,7 +7,7 @@
 
 #define CLINE_DEFAULT_CAP 32
 #define CLINE_GROWTH_RATE 2
-#define GAPBUFFER_DEFAULT_CAP 128
+#define GAPBUFFER_DEFAULT_CAP 2048
 #define GAPBUFFER_GROWTH_RATE 2
 
 typedef struct Buffer Buffer;
@@ -34,14 +34,15 @@ BufferRender    *buffer_setrdr(Buffer *, BufferRender *);
 
 /*
  * A BufferRender is a copy of the Buffer CLines that are currently
- * displayed (or inside the dot if the dot goes out of the screen)
- * as unicode codepoints. For easier text rendering, it stores
- * lines as a Rune gap buffer and maintains a cursor position
- * (line/column).
- * When text is edited on the screen, modifications are applied
- * inside of the BufferRender lines. When a line goes out of
- * the renderer range, the new version of the line is converted
- * back CLine an written at the write stop in the Buffer.
+ * displayed on the screen as unicode codepoints. For easier text
+ * rendering, it stores the lines as a Rune gap buffer and maintains
+ * a cursor position (line/column).
+ * When text is edited on the screen, modifications are either:
+ * - applied to the BufferRender, and later written to the Buffer 
+ *   when line(s) go(es) out of screen, if the modifications are
+ *   in the BufferRender range.
+ * - applied to the Buffer lines, and replicated to the BufferRender
+ *   if the modification are out of the BUffer Render scope.
  */
 struct BufferRender {
     GapBuffer *gbuf;
@@ -81,6 +82,7 @@ struct GapBuffer {
 };
 
 GapBuffer    *gapbuffer_create(void);
+long     gapbuffer_clear(GapBuffer *);
 int      gapbuffer_delafter(GapBuffer *, int);
 int	     gapbuffer_delbefore(GapBuffer *, int);
 void	 gapbuffer_free(GapBuffer *);

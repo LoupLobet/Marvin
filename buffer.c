@@ -75,6 +75,7 @@ buffer_setrdr(Buffer *buf, BufferRender *rdr)
 	CLine *p;
 	int linelen, runelen;
 
+	gapbuffer_clear(rdr->gbuf);
 	for (p = rdr->fromline; p != NULL && p->prev != rdr->toline; p = p->next) {
 		n = 0;
 		i = 0;
@@ -201,7 +202,7 @@ gapbuffer_create(void)
 	if ((gbuf = malloc(sizeof(GapBuffer))) == NULL)
 		return NULL;
 	gbuf->cap = GAPBUFFER_DEFAULT_CAP;
-	if ((gbuf->bob = malloc(gbuf->cap)) == NULL) {
+	if ((gbuf->bob = malloc(gbuf->cap * sizeof(Rune))) == NULL) {
 		free(gbuf);
 		return NULL;
 	}
@@ -213,6 +214,17 @@ gapbuffer_create(void)
     gbuf->gapline = 0;
     gbuf->gapcol = 0;
 	return gbuf;
+}
+
+long
+gapbuffer_clear(GapBuffer *gbuf)
+{
+	gbuf->len = 0;
+	gbuf->gapsize = gbuf->cap;
+	gbuf->bog = gbuf->bob;
+	gbuf->eog = gbuf->eob;
+	return gbuf->gapsize;
+	
 }
 
 int
@@ -291,7 +303,6 @@ gapbuffer_insbefore(GapBuffer *gbuf, Rune *v, int n)
 	for (i = 0; i < n; i++) {
 		*gbuf->bog = v[i];
 		gbuf->gapcol++;
-		printf("v[i] = <%d>\n", v[i]);
 		if (v[i] == (Rune)'\n') {
 		    gbuf->gapline++;
 		    gbuf->gapcol = 0;
@@ -300,6 +311,7 @@ gapbuffer_insbefore(GapBuffer *gbuf, Rune *v, int n)
 		gbuf->gapsize--;
 		gbuf->len++;
 		if (gbuf->gapsize <= 1) {
+			puts("GROW!");
 			if (!gapbuffer_grow(gbuf))
 				return i;
 		}
@@ -365,10 +377,10 @@ gapbuffer_grow(GapBuffer *gbuf)
 	long leftsize, newcap, rightsize;
 	long gapsize;
 
-	newcap = (gbuf->cap < 1 ? 2 : gbuf->cap * 2);
+	newcap = (!gbuf->cap ? 2 : gbuf->cap * 2);
 	leftsize = gbuf->bog - gbuf->bob;
 	rightsize = gbuf->eob - gbuf->eog;
-	if ((new = realloc(gbuf->bob, newcap)) == NULL)
+	if ((new = realloc(gbuf->bob, newcap * sizeof(Rune))) == NULL)
 		return 0;
 	gapsize = newcap - (gbuf->cap - gbuf->gapsize);
 	if (gbuf->eog != gbuf->eob)

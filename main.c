@@ -2,14 +2,21 @@
 #include <stdio.h>
 
 #include "buffer.h"
+#include "draw.h"
 
 int
 main(int argc, char *argv[])
 {
     Buffer *buf;
     CLine *cline;
+    Draw *drw;
     int nline;
 
+    if ((drw = draw_create("marvin", 600, 600)) == NULL) {
+        perror("cannot init draw");
+        exit(1);
+    }
+    
     if ((buf = buffer_openfile("./Makefile")) == NULL) {
         perror("cannot open file");
         exit(1);
@@ -26,6 +33,9 @@ main(int argc, char *argv[])
         perror("cannot set buffer render");
         exit(1);
     }
+    draw_run(drw);
     printf("gapline = %d, gapcol = %d\n", buf->rdr->gbuf->gapline, buf->rdr->gbuf->gapcol);
+
+    
     return 0;
 }
