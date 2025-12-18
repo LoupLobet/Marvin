@@ -3,7 +3,7 @@ CC=cc
 LIBS=-L/opt/homebrew/lib
 INCS=-I/opt/homebrew/include
 
-CFLAGS=-Wall -pedantic -std=c99 $(INCS)
+CFLAGS=-Wall -pedantic -std=c99 $(INCS) -D_POSIX_C_SOURCE=200809L
 LDFLAGS=$(LIBS) -lm -lSDL2 -lSDL2_ttf
 
 PROG=marvin

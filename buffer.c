@@ -92,8 +92,8 @@ buffer_setrdr(Buffer *buf, BufferRender *rdr)
 				k = gapbuffer_insbefore(rdr->gbuf, runeline, n);
 				/* gapbuffer reallocation went wrong for some reason */
 				if (k != n) {
-					free(rdr);
 					gapbuffer_free(rdr->gbuf);
+					rdr->gbuf = NULL;
 					return NULL;
 				}
 				n = 0;
