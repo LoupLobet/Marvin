@@ -29,6 +29,7 @@ struct Buffer {
 };
 
 Buffer    *buffer_create(char *);
+void       buffer_free(Buffer *);
 Buffer    *buffer_openfile(char *);
 BufferRender    *buffer_setrdr(Buffer *, BufferRender *);
 
@@ -51,6 +52,7 @@ struct BufferRender {
 };
 
 BufferRender    *bufferrender_create(CLine *, CLine *, int, int);
+void     bufferrender_free(BufferRender *);
 
 struct CLine {
     long cap;
@@ -90,6 +92,7 @@ int	     gapbuffer_insafter(GapBuffer *, Rune *, int);
 int	     gapbuffer_insbefore(GapBuffer *, Rune *, int);
 int      gapbuffer_mvbackwardnr(GapBuffer *, int, Rune);
 int      gapbuffer_mvforwardnr(GapBuffer *, int, Rune);
+Rune    *gapbuffer_nextrune(GapBuffer *, Rune *);
 int	     gapbuffer_grow(GapBuffer *);
 
 #endif

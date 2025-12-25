@@ -4,6 +4,7 @@
 #include "buffer.h"
 #include "draw.h"
 
+
 int
 main(int argc, char *argv[])
 {

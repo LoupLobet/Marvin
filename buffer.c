@@ -22,6 +22,18 @@ buffer_create(char *name)
     return buf;
 }
 
+void
+buffer_free(Buffer *buf)
+{
+	free(buf->name);
+	if (buf->head != NULL)
+		cline_freenext(buf->head);
+	if (buf->rdr != NULL)
+		bufferrender_free(buf->rdr);
+	free(buf);
+	
+}
+
 Buffer *
 buffer_openfile(char *path)
 {
@@ -119,11 +131,10 @@ bufferrender_create(CLine *fromline, CLine *toline, int fromcol, int tocol)
 }
 
 void
-buffer_free(Buffer *buf)
+bufferrender_free(BufferRender *rdr)
 {
-    cline_freenext(buf->head);
-    free(buf->name);
-    free(buf);
+	gapbuffer_free(rdr->gbuf);
+    free(rdr);
 }
 
 char *
@@ -311,7 +322,6 @@ gapbuffer_insbefore(GapBuffer *gbuf, Rune *v, int n)
 		gbuf->gapsize--;
 		gbuf->len++;
 		if (gbuf->gapsize <= 1) {
-			puts("GROW!");
 			if (!gapbuffer_grow(gbuf))
 				return i;
 		}
@@ -368,6 +378,22 @@ gapbuffer_mvforward(GapBuffer *gbuf, int n)
 		moved++;
 	}
 	return moved;
+}
+
+Rune *
+gapbuffer_nextrune(GapBuffer *gbuf, Rune *r)
+{
+	/* r = NULL is bob */
+	if (r == NULL)
+		r = gbuf->bob;
+	else
+		r++;
+	if (r == gbuf->bog) {
+		if (gbuf->eog == gbuf->eob)
+			return NULL;
+		return gbuf->eog + 1;
+	}
+	return r;
 }
 
 int
